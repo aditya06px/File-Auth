@@ -8,6 +8,8 @@ const {
   validateEmail,
   validatePassword,
 } = require("../utils/validators");
+const { JsonWebTokenError } = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 
 router.post("/signup", async (req, res) => {
   try {
@@ -61,10 +63,10 @@ router.post("/signin", async (req, res) => {
 
     // validate all =>  NO => 500 wrong information
     if (!validateEmail(email)) {
-      return res.status(500).send("Invalid Email");
+      return res.status(400).send("Invalid Email");
     }
     if (!validatePassword(password)) {
-      return res.status(500).send("Invalid Password");
+      return res.status(400).send("Invalid Password");
     }
     //yes =>
     // check userExists
@@ -72,7 +74,7 @@ router.post("/signin", async (req, res) => {
 
     //    => NO => 500 user Doesn't exists
     if (!userExist) {
-      return res.status(500).send(" user Doesn't exist. Please sign Up!");
+      return res.status(400).send(" user Doesn't exist. Please sign Up!");
     }
 
     // yes => check the password
@@ -81,13 +83,33 @@ router.post("/signin", async (req, res) => {
 
     //    => NO => password is wrong
     if (!correctPassword) {
-      return res.status(500).send("email or password is incorrect");
+      return res.status(400).send("email or password is incorrect");
     }
     // yes => send res you are signed in
-    return res.status(200).send("you are signed in");
+    // creating token , "secrect message" => any string
+    // payload => user object 
+    const payload = { user: {id: userExist.id}};
+    const bearerToken = await jwt.sign(payload, "SECRET MESSAGE", {
+      expiresIn: 36000
+    });
+
+     // setting cookie
+    res.cookie('t',bearerToken, {expire: new Date() + 999})
+
+    return res.status(200).json({
+      bearerToken
+    });
   } catch (e) {
     return res.status(500).send(e);
   }
 });
 
+router.get('/signout', (req,res)=>{
+    try {
+      res.clearCookie('t'); // name of the cookie 't'
+      return res.status(200).json({message: " cookie deleted "});
+    } catch(e) {
+      res.status(500).send(e);
+    }
+})
 module.exports = router;
