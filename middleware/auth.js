@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
 
 const isAuthenticated = async (req, res, next) => {
+    console.log("alooo");
     try {
         // bearer {TOKEN}
         const authHeader = req.headers.authorization;
@@ -14,6 +15,7 @@ const isAuthenticated = async (req, res, next) => {
        
         const token = authHeader.split(" ")[1] 
         //split => ["bearer" , "{TOKEN}" ]
+        // token = req.cookie.t  // whatever name given to token
 
         if(!token) {
             return res.status(401).json({
@@ -24,6 +26,12 @@ const isAuthenticated = async (req, res, next) => {
         // console.log("authheader ", authHeader.split(" "));
         // console.log("token " , token);
          const decoded = jwt.verify(token, "SECRET MESSAGE");
+         console.log(" ********** decode *********" )
+         console.log(typeof decoded);
+         console.log( decoded);
+         console.log(" ********** decode.user *********" )
+         console.log(typeof decoded.user);
+         console.log( decoded.user);
          
          const user =await User.findOne({where: {id: decoded.user.id}})
          if(!user) {
